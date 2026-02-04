@@ -7,6 +7,15 @@ import { type Lang, translations } from './i18n/translations';
 
 const LANGUAGES: Lang[] = ['TR', 'EN', 'DE'];
 
+const glassyStyle = {
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.1) 100%)',
+  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.25)',
+  border: '1px solid rgba(255,255,255,0.25)',
+  borderRadius: '9999px',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+};
+
 function App() {
   const [inputValue, setInputValue] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,8 +52,8 @@ function App() {
               setLangDropdownOpen((o) => !o);
             }}
             className="flex items-center gap-1 px-1.5 py-1.5 text-base font-semibold font-exo text-white/90
-              bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded border border-white/20
-              transition-all duration-200 w-12 justify-between"
+              hover:opacity-90 transition-all duration-200 w-12 justify-between"
+            style={{ ...glassyStyle, borderRadius: '0.5rem' }}
           >
             <span>{translations[lang].langLabel}</span>
             <svg
@@ -67,7 +76,8 @@ function App() {
             setLangDropdownOpen(false);
             setMenuOpen((o) => !o);
           }}
-          className="p-1.5 rounded text-white/90 hover:bg-white/15 hover:text-white transition-all duration-200"
+          className="p-1.5 text-white/90 hover:opacity-90 transition-all duration-200"
+          style={{ ...glassyStyle, borderRadius: '0.5rem' }}
           aria-label="Toggle menu"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -88,9 +98,12 @@ function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
-                className="absolute left-0 top-0 w-12
-                  bg-black/80 backdrop-blur-xl border border-white/20 rounded overflow-hidden
-                  shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5 z-[31]"
+                className="absolute left-0 top-0 w-12 overflow-hidden py-0.5 z-[31]"
+                style={{
+                  ...glassyStyle,
+                  borderRadius: '0.5rem',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 100%)',
+                }}
               >
                 {LANGUAGES.map((l) => (
                   <button
@@ -114,9 +127,12 @@ function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-0 min-w-[5.5rem] max-w-[5.5rem]
-                  bg-black/80 backdrop-blur-xl border border-white/20 rounded overflow-hidden
-                  shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5 z-[31]"
+                className="absolute right-0 top-0 min-w-[5.5rem] max-w-[5.5rem] overflow-hidden py-0.5 z-[31]"
+                style={{
+                  ...glassyStyle,
+                  borderRadius: '0.5rem',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 100%)',
+                }}
               >
                 {menuItems.map((item, i) => (
                   <button
@@ -192,17 +208,15 @@ function App() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={t.searchPlaceholder}
-            className="px-6 pr-12 py-2.5 bg-white/20 backdrop-blur-xl border border-white/30 
-                     text-white placeholder:text-white/60 
-                     focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40
+            className="px-6 pr-12 py-2.5 text-white placeholder:text-white/60 
+                     focus:outline-none focus:ring-2 focus:ring-white/30
                      transition-all duration-300
                      w-[90vw] max-w-[500px]
-                     text-base font-medium
-                     shadow-[0_8px_32px_0_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]"
+                     text-base font-medium"
             style={{
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: '2rem',
+              ...glassyStyle,
+              paddingLeft: '1.5rem',
+              paddingRight: '3rem',
             }}
           />
           {/* Search Icon */}
@@ -224,11 +238,11 @@ function App() {
           </div>
           {/* Gloss effect overlay */}
           <div 
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none rounded-[2rem]"
             style={{
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 45%)',
               mixBlendMode: 'overlay',
-              borderRadius: '2rem',
+              borderRadius: '9999px',
             }}
           />
         </motion.div>
