@@ -1,14 +1,147 @@
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
 import EarthScene from './components/EarthScene';
+import { useLang } from './context/LangContext';
+import { type Lang, translations } from './i18n/translations';
+
+const LANGUAGES: Lang[] = ['TR', 'EN', 'DE'];
 
 function App() {
   const [inputValue, setInputValue] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+  const { lang, setLang, t } = useLang();
+
+  const menuItems = [t.menuContent1, t.menuContent2, t.menuContent3, t.menuContent4];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
       {/* Background Layer: 3D Earth Scene */}
       <EarthScene />
+
+      {/* Top Right: Language Dropdown + Hamburger Menu */}
+      <div className="absolute top-8 right-6 flex flex-col items-end gap-0 z-[30]" ref={langDropdownRef}>
+        <div className="flex items-center gap-4">
+        {/* Language Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              setLangDropdownOpen((o) => !o);
+            }}
+            className="flex items-center gap-1 px-1.5 py-1.5 text-base font-semibold font-exo text-white/90
+              bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded border border-white/20
+              transition-all duration-200 w-12 justify-between"
+          >
+            <span>{translations[lang].langLabel}</span>
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className={`transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Hamburger Menu Button */}
+        <button
+          onClick={() => {
+            setLangDropdownOpen(false);
+            setMenuOpen((o) => !o);
+          }}
+          className="p-1.5 rounded text-white/90 hover:bg-white/15 hover:text-white transition-all duration-200"
+          aria-label="Toggle menu"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        </div>
+
+        {/* Shared dropdown area - same top level for both */}
+        <div className="relative w-full mt-1.5">
+          <AnimatePresence mode="wait">
+            {langDropdownOpen && (
+              <motion.div
+                key="lang"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-0 top-0 w-12
+                  bg-black/80 backdrop-blur-xl border border-white/20 rounded overflow-hidden
+                  shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5 z-[31]"
+              >
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => {
+                      setLang(l);
+                      setLangDropdownOpen(false);
+                    }}
+                    className={`w-full px-1.5 py-1 text-center text-base font-semibold font-exo transition-colors
+                      ${lang === l ? 'text-white bg-white/15' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}
+                  >
+                    {translations[l].langLabel}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+            {menuOpen && (
+              <motion.div
+                key="menu"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-0 min-w-[5.5rem] max-w-[5.5rem]
+                  bg-black/80 backdrop-blur-xl border border-white/20 rounded overflow-hidden
+                  shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5 z-[31]"
+              >
+                {menuItems.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full px-1.5 py-1 text-center text-base font-semibold font-exo text-white/90 hover:bg-white/10 hover:text-white transition-colors not-italic"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Click outside to close menus */}
+      {(menuOpen || langDropdownOpen) && (
+        <div
+          className="fixed inset-0 z-[25]"
+          onClick={() => {
+            setMenuOpen(false);
+            setLangDropdownOpen(false);
+          }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Top Layer: Temporary Text */}
       <div className="absolute top-0 left-0 right-0 flex justify-center pt-[13rem] pointer-events-none z-[15]">
@@ -56,7 +189,7 @@ function App() {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Track or Ask..."
+            placeholder={t.searchPlaceholder}
             className="px-6 pr-12 py-2.5 bg-white/20 backdrop-blur-xl border border-white/30 
                      text-white placeholder:text-white/60 
                      focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40
