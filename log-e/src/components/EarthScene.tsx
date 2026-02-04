@@ -2,12 +2,15 @@ import { Suspense, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Stars, Environment } from '@react-three/drei';
 import { useControls } from 'leva';
+import * as THREE from 'three';
 import Globe from './Globe';
 
 function CameraController({ fov, distanceOffset }: { fov: number; distanceOffset: number }) {
   const { camera } = useThree();
   useEffect(() => {
-    camera.fov = fov;
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = fov;
+    }
     camera.updateProjectionMatrix();
   }, [camera, fov]);
   useEffect(() => {
