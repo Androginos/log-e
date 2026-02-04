@@ -25,13 +25,13 @@ function Globe({ rotationX = 0.5, rotationZ = 0.41, rotationYSpeed = 0.05, posit
   const earthMap = useTexture(earthTextureUrl);
   const cloudMap = useTexture(cloudTextureUrl);
 
-  // Rotate the globe slowly on Y-axis and add subtle horizon movement
+  // Rotate the globe on X-axis (yukarıdan aşağıya / ekrana doğru). Eski: Y ekseni (soldan sağa).
   useFrame((state, delta) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += delta * rotationYSpeed;
+      meshRef.current.rotation.x += delta * rotationYSpeed;
     }
     if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * (rotationYSpeed * 1.2); // Slightly faster for parallax depth
+      cloudsRef.current.rotation.x += delta * (rotationYSpeed * 1.2); // Slightly faster for parallax depth
     }
     
     // Base tilt from Leva + subtle oscillation

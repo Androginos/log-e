@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
-import { Leva } from 'leva';
 import EarthScene from './components/EarthScene';
 import { useLang } from './context/LangContext';
 import { type Lang, translations } from './i18n/translations';
@@ -14,6 +13,13 @@ const glassyStyle = {
   borderRadius: '9999px',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
+};
+
+const dropdownPanelStyle = {
+  background: 'rgba(255, 255, 255, 0.14)',
+  border: '1px solid rgba(255, 255, 255, 0.28)',
+  borderRadius: '0.5rem',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
 };
 
 function App() {
@@ -37,7 +43,6 @@ function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
-      <Leva fill flat hideCopyButton titleBar={{ title: 'Globe Controls' }} />
       {/* Background Layer: 3D Earth Scene */}
       <EarthScene />
 
@@ -53,7 +58,6 @@ function App() {
             }}
             className="flex items-center justify-center gap-1 w-11 h-11 text-base font-semibold font-exo text-white/90
               hover:opacity-90 transition-all duration-200"
-            style={{ ...glassyStyle, borderRadius: '0.5rem' }}
           >
             <span>{translations[lang].langLabel}</span>
             <svg
@@ -77,7 +81,6 @@ function App() {
             setMenuOpen((o) => !o);
           }}
           className="flex items-center justify-center w-11 h-11 text-white/90 hover:opacity-90 transition-all duration-200"
-          style={{ ...glassyStyle, borderRadius: '0.5rem' }}
           aria-label="Toggle menu"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -98,12 +101,8 @@ function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
-                className="absolute left-0 top-0 min-w-[5.5rem] max-w-[5.5rem] overflow-hidden py-0.5 z-[31]"
-                style={{
-                  ...glassyStyle,
-                  borderRadius: '0.5rem',
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 100%)',
-                }}
+                className="absolute left-0 top-0 w-11 overflow-hidden z-[31] flex flex-col items-stretch"
+                style={dropdownPanelStyle}
               >
                 {LANGUAGES.map((l) => (
                   <button
@@ -112,7 +111,7 @@ function App() {
                       setLang(l);
                       setLangDropdownOpen(false);
                     }}
-                    className={`w-full px-1.5 py-1 text-center text-base font-semibold font-exo transition-colors
+                    className={`w-11 h-11 flex items-center justify-center text-base font-semibold font-exo transition-colors
                       ${lang === l ? 'text-white bg-white/15' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}
                   >
                     {translations[l].langLabel}
@@ -128,11 +127,7 @@ function App() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
                 className="absolute right-0 top-0 min-w-[5.5rem] max-w-[5.5rem] overflow-hidden py-0.5 z-[31]"
-                style={{
-                  ...glassyStyle,
-                  borderRadius: '0.5rem',
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 100%)',
-                }}
+                style={dropdownPanelStyle}
               >
                 {menuItems.map((item, i) => (
                   <button
