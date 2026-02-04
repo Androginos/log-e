@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
+import { Leva } from 'leva';
 import EarthScene from './components/EarthScene';
 import { useLang } from './context/LangContext';
 import { type Lang, translations } from './i18n/translations';
@@ -27,6 +28,7 @@ function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
+      <Leva fill flat hideCopyButton titleBar={{ title: 'Globe Controls' }} />
       {/* Background Layer: 3D Earth Scene */}
       <EarthScene />
 

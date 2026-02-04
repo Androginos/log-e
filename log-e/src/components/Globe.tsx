@@ -3,7 +3,14 @@ import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
-function Globe() {
+type GlobeProps = {
+  rotationX?: number;
+  rotationZ?: number;
+  rotationYSpeed?: number;
+  positionY?: number;
+};
+
+function Globe({ rotationX = 0.5, rotationZ = 0.41, rotationYSpeed = 0.05, positionY = -14.5 }: GlobeProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   const atmosphereRef = useRef<THREE.Mesh>(null);
@@ -21,27 +28,23 @@ function Globe() {
   // Rotate the globe slowly on Y-axis and add subtle horizon movement
   useFrame((state, delta) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.05; // Slow, cinematic rotation
+      meshRef.current.rotation.y += delta * rotationYSpeed;
     }
     if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * 0.06; // Slightly faster for parallax depth
+      cloudsRef.current.rotation.y += delta * (rotationYSpeed * 1.2); // Slightly faster for parallax depth
     }
     
-    // Subtle horizon movement - slight tilt animation
+    // Base tilt from Leva + subtle oscillation
     if (groupRef.current) {
-      // Base backward tilt on X-axis to show more of the back/middle portion
-      const baseTilt = -0.4; // ~23 degrees backward tilt
-      // Gentle oscillation on X-axis for horizon sway (added to base tilt)
-      groupRef.current.rotation.x = baseTilt + Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
-      // Subtle Z-axis tilt for dynamic feel
-      groupRef.current.rotation.z = Math.cos(state.clock.elapsedTime * 0.25) * 0.015;
+      groupRef.current.rotation.x = rotationX + Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
+      groupRef.current.rotation.z = rotationZ + Math.cos(state.clock.elapsedTime * 0.25) * 0.015;
     }
   });
 
   // Position the globe at the bottom center, creating a horizon effect
   // Only the top portion will be visible
   return (
-    <group ref={groupRef} position={[0, -14.5, 0]}>
+    <group ref={groupRef} position={[0, positionY, 0]}>
       {/* Main Earth Sphere */}
       <mesh ref={meshRef} scale={[15, 15, 15]}>
         <sphereGeometry args={[1, 64, 64]} />
