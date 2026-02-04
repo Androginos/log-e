@@ -51,8 +51,8 @@ function App() {
               setMenuOpen(false);
               setLangDropdownOpen((o) => !o);
             }}
-            className="flex items-center gap-1 px-1.5 py-1.5 text-base font-semibold font-exo text-white/90
-              hover:opacity-90 transition-all duration-200 w-12 justify-between"
+            className="flex items-center justify-center gap-1 w-11 h-11 text-base font-semibold font-exo text-white/90
+              hover:opacity-90 transition-all duration-200"
             style={{ ...glassyStyle, borderRadius: '0.5rem' }}
           >
             <span>{translations[lang].langLabel}</span>
@@ -76,7 +76,7 @@ function App() {
             setLangDropdownOpen(false);
             setMenuOpen((o) => !o);
           }}
-          className="p-1.5 text-white/90 hover:opacity-90 transition-all duration-200"
+          className="flex items-center justify-center w-11 h-11 text-white/90 hover:opacity-90 transition-all duration-200"
           style={{ ...glassyStyle, borderRadius: '0.5rem' }}
           aria-label="Toggle menu"
         >
@@ -98,7 +98,7 @@ function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
-                className="absolute left-0 top-0 w-12 overflow-hidden py-0.5 z-[31]"
+                className="absolute left-0 top-0 min-w-[5.5rem] max-w-[5.5rem] overflow-hidden py-0.5 z-[31]"
                 style={{
                   ...glassyStyle,
                   borderRadius: '0.5rem',
