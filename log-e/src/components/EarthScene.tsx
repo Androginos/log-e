@@ -1,18 +1,9 @@
 import { Suspense, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Stars, Environment } from '@react-three/drei';
+import { useControls } from 'leva';
 import * as THREE from 'three';
 import Globe from './Globe';
-
-// Sabit sahne ayarları (ileride güncellemek için bu değerleri değiştir)
-const GLOBE = {
-  rotationX: 0.5,
-  rotationZ: 0.76,
-  rotationYSpeed: 0.02,
-  positionY: -14.5,
-} as const;
-const CAMERA = { fov: 30, distanceOffset: -1.0 } as const;
-const LIGHTING = { ambientIntensity: 0.3, directionalIntensity: 1.0 } as const;
 
 function CameraController({ fov, distanceOffset }: { fov: number; distanceOffset: number }) {
   const { camera } = useThree();
@@ -31,9 +22,26 @@ function CameraController({ fov, distanceOffset }: { fov: number; distanceOffset
 }
 
 function EarthScene() {
+  const globeControls = useControls('Globe', {
+    rotationX: { value: 0.21, min: -Math.PI, max: Math.PI, step: 0.01, label: 'Rotation X' },
+    rotationZ: { value: 0.0, min: -Math.PI, max: Math.PI, step: 0.01, label: 'Rotation Z' },
+    rotationYSpeed: { value: 0.02, min: 0, max: 0.2, step: 0.005, label: 'Rotation Y' },
+    positionY: { value: -14.5, min: -20, max: 0, step: 0.1, label: 'Position Y' },
+  });
+
+  const cameraControls = useControls('Camera', {
+    fov: { value: 35, min: 15, max: 75, step: 1, label: 'FOV' },
+    distanceOffset: { value: -8.1, min: -15, max: 4, step: 0.1, label: 'Mesafe' },
+  });
+
+  const lightingControls = useControls('Lighting', {
+    ambientIntensity: { value: 0.3, min: 0, max: 2, step: 0.05, label: 'Ambient' },
+    directionalIntensity: { value: 1.0, min: 0, max: 3, step: 0.1, label: 'Directional' },
+  });
+
   return (
     <Canvas
-      camera={{ position: [0, 5, 20], fov: CAMERA.fov }}
+      camera={{ position: [0, 5, 20], fov: cameraControls.fov }}
       gl={{
         antialias: false,
         powerPreference: "high-performance",
@@ -43,27 +51,16 @@ function EarthScene() {
       style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 10 }}
     >
       <Suspense fallback={null}>
-        {/* Deep space background with stars */}
-        <Stars
-          radius={300}
-          depth={60}
-          count={5000}
-          factor={7}
-          saturation={0}
-          fade={true}
-        />
+        <Stars radius={300} depth={60} count={5000} factor={7} saturation={0} fade={true} />
 
-        {/* Lighting */}
-        <ambientLight intensity={LIGHTING.ambientIntensity} />
-        <directionalLight position={[10, 10, 5]} intensity={LIGHTING.directionalIntensity} />
+        <ambientLight intensity={lightingControls.ambientIntensity} />
+        <directionalLight position={[10, 10, 5]} intensity={lightingControls.directionalIntensity} />
         <pointLight position={[-10, -10, -5]} intensity={0.5} />
 
-        <CameraController fov={CAMERA.fov} distanceOffset={CAMERA.distanceOffset} />
+        <CameraController fov={cameraControls.fov} distanceOffset={cameraControls.distanceOffset} />
 
-        {/* The 3D Earth Globe */}
-        <Globe {...GLOBE} />
+        <Globe {...globeControls} />
 
-        {/* Environment for reflections (optional) */}
         <Environment preset="night" />
       </Suspense>
     </Canvas>

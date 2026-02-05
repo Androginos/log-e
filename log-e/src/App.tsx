@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
+import { Leva } from 'leva';
 import EarthScene from './components/EarthScene';
 import { useLang } from './context/LangContext';
 import { type Lang, translations } from './i18n/translations';
@@ -41,6 +42,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [levaOpen, setLevaOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
   const { lang, setLang, t } = useLang();
@@ -67,7 +69,7 @@ function App() {
   const glassTranslateY = (1 - progress) * 100;
   const scrollIndicatorOpacity = 1 - progress;
   const headerHeight = 56;
-  const logeTopPercent = 12 - progress * 9;
+  const logeTopPercent = 22 - progress * 16;
   const logeScale = 0.42 + (1 - progress) * 0.58;
 
   return (
@@ -78,6 +80,60 @@ function App() {
       {/* Sabit arka plan: Dünya */}
       <div className="fixed inset-0 z-0">
         <EarthScene />
+      </div>
+
+      {/* Globe ayarları: sol üstte, ana sayfadayken görünür (scroll ile kaybolur) */}
+      <div
+        className="fixed top-8 left-6 z-[35] flex flex-col items-start gap-2 transition-opacity duration-300"
+        style={{
+          opacity: scrollIndicatorOpacity,
+          pointerEvents: progress > 0.5 ? 'none' : 'auto',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setLevaOpen((o) => !o)}
+          className="flex items-center justify-center w-10 h-10 text-white/80 hover:text-white transition-colors p-0 min-w-0"
+          aria-label="Globe ayarları"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+        </button>
+        <AnimatePresence>
+          {levaOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-lg overflow-hidden shadow-xl"
+              style={{
+                ...dropdownPanelStyle,
+                background: 'rgba(0, 0, 0, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+              }}
+            >
+              <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+                <span className="text-white/80 text-xs font-exo font-semibold">Globe Ayarları</span>
+                <button
+                  type="button"
+                  onClick={() => setLevaOpen(false)}
+                  className="text-white/60 hover:text-white p-1 rounded transition-colors"
+                  aria-label="Kapat"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="max-h-[70vh] overflow-auto" style={{ width: 280 }}>
+                <Leva fill flat hideCopyButton collapsed />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Header: scroll ile yukarıdan iner (menü + dil) */}
@@ -196,7 +252,7 @@ function App() {
           className="font-exo font-black italic leading-none tracking-tight whitespace-nowrap"
           style={{
             color: '#FAF9F6',
-            fontSize: 'clamp(2.5rem, 8vw, 6.5rem)',
+            fontSize: 'clamp(2.25rem, 6.5vw, 5.5rem)',
             textShadow: '0 0 20px rgba(255, 255, 255, 0.2), 0 0 40px rgba(255, 255, 255, 0.1)',
             filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
             fontWeight: 800,
@@ -205,7 +261,7 @@ function App() {
           LOG-E
         </h1>
         <motion.p
-          className="text-white/60 font-light tracking-wide font-exo mt-0 text-xl"
+          className="text-white/60 font-light tracking-wide font-exo mt-0 text-base sm:text-lg md:text-xl"
           style={{ textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -215,7 +271,7 @@ function App() {
         </motion.p>
       </div>
 
-      {/* Scroll down göstergesi: yazı + aşağı ok (sağ üst, geçici pozisyon) */}
+      {/* Scroll down göstergesi: sağ üst, globe ile aynı hizada, çerçevesiz */}
       <div
         className="fixed top-8 right-6 z-[20] flex flex-col items-center gap-1 pointer-events-none transition-opacity duration-300"
         style={{ opacity: scrollIndicatorOpacity }}
@@ -232,19 +288,57 @@ function App() {
         </motion.div>
       </div>
 
-      {/* Aero glass panel: alttan yukarı açılır, köşeli */}
+      {/* Aero glass panel: alttan yukarı açılır, üst kenarı aşağıda (responsive) */}
       <div
         className="fixed left-0 right-0 bottom-0 z-[20] transition-transform duration-300 ease-out overflow-hidden"
         style={{
-          height: '94vh',
+          height: '88vh',
           transform: `translateY(${glassTranslateY}%)`,
           ...aeroGlassStyle,
         }}
       >
-        <div className="h-full overflow-auto p-8 pt-12 text-white/90">
-          <p className="text-lg font-exo font-light max-w-xl">
-            Bu alan scroll ile açılan saydam içerik bölümü. İçerik buraya eklenecek.
-          </p>
+        <div className="h-full overflow-auto scrollbar-hide p-6 sm:p-8 pt-10 pb-24 text-white/90">
+          {/* 1. Hizmetler */}
+          <section className="mb-14 sm:mb-16">
+            <h2 className="font-exo font-bold text-xl sm:text-2xl text-white mb-4">Hizmetler</h2>
+            <p className="font-exo font-light text-sm sm:text-base text-white/85 leading-relaxed max-w-xl">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+            </p>
+            <ul className="mt-4 space-y-2 text-white/75 text-sm sm:text-base font-exo font-light">
+              <li>• Hizmet bir</li>
+              <li>• Hizmet iki</li>
+              <li>• Hizmet üç</li>
+            </ul>
+          </section>
+
+          {/* 2. Hakkında */}
+          <section className="mb-14 sm:mb-16">
+            <h2 className="font-exo font-bold text-xl sm:text-2xl text-white mb-4">Hakkında</h2>
+            <p className="font-exo font-light text-sm sm:text-base text-white/85 leading-relaxed max-w-xl">
+              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </section>
+
+          {/* 3. Neden Biz */}
+          <section className="mb-14 sm:mb-16">
+            <h2 className="font-exo font-bold text-xl sm:text-2xl text-white mb-4">Neden Biz</h2>
+            <p className="font-exo font-light text-sm sm:text-base text-white/85 leading-relaxed max-w-xl">
+              Nulla facilisi morbi tempus iaculis urna. Eget nunc scelerisque viverra mauris in aliquam sem. Magna sit amet purus gravida quis blandit turpis cursus in.
+            </p>
+          </section>
+
+          {/* 4. İletişim */}
+          <section className="mb-14 sm:mb-16">
+            <h2 className="font-exo font-bold text-xl sm:text-2xl text-white mb-4">İletişim</h2>
+            <p className="font-exo font-light text-sm sm:text-base text-white/85 leading-relaxed max-w-xl mb-4">
+              Bize ulaşın. Sorularınız için aşağıdaki kanalları kullanabilirsiniz.
+            </p>
+            <ul className="space-y-2 text-white/75 text-sm sm:text-base font-exo font-light">
+              <li>E-posta: info@ornek.com</li>
+              <li>Tel: +90 XXX XXX XX XX</li>
+              <li>Adres: Örnek Mah. Örnek Sk. No: 1, Şehir</li>
+            </ul>
+          </section>
         </div>
       </div>
 
