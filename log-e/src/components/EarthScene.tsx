@@ -1,27 +1,60 @@
-import { Suspense, useEffect } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { Stars, Environment } from '@react-three/drei';
+import { Suspense, useEffect, useRef } from 'react';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { Stars, Environment, OrbitControls } from '@react-three/drei';
 import { useControls } from 'leva';
 import * as THREE from 'three';
 import Globe from './Globe';
+import { useTracking } from '../context/TrackingContext';
 
-function CameraController({ fov, distanceOffset }: { fov: number; distanceOffset: number }) {
+function CameraController({
+  fov,
+  distanceOffset,
+  isTrackingMode,
+}: {
+  fov: number;
+  distanceOffset: number;
+  isTrackingMode: boolean;
+}) {
   const { camera } = useThree();
+  const currentZ = useRef(20 + distanceOffset);
+  const currentFov = useRef(fov);
+  const targetZ = isTrackingMode ? 26 : 20 + distanceOffset;
+  const targetFov = isTrackingMode ? 50 : fov;
+
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
       camera.fov = fov;
     }
     camera.updateProjectionMatrix();
   }, [camera, fov]);
+
   useEffect(() => {
-    camera.position.set(0, 5, 20 + distanceOffset);
-    camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
-  }, [camera, distanceOffset]);
+    if (isTrackingMode) {
+      camera.position.set(0, 0, 26);
+      camera.lookAt(0, 0, 0);
+      currentZ.current = 26;
+    }
+  }, [isTrackingMode, camera]);
+
+  useFrame(() => {
+    currentZ.current += (targetZ - currentZ.current) * 0.08;
+    currentFov.current += (targetFov - currentFov.current) * 0.08;
+    if (!isTrackingMode) {
+      camera.position.set(0, 5, currentZ.current);
+      camera.lookAt(0, 0, 0);
+    }
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = currentFov.current;
+      camera.updateProjectionMatrix();
+    }
+  });
+
   return null;
 }
 
 function EarthScene() {
+  const { isTrackingMode, activeRoute } = useTracking();
+
   const globeControls = useControls('Globe', {
     rotationX: { value: 0.21, min: -Math.PI, max: Math.PI, step: 0.01, label: 'Rotation X' },
     rotationZ: { value: 0.0, min: -Math.PI, max: Math.PI, step: 0.01, label: 'Rotation Z' },
@@ -34,6 +67,10 @@ function EarthScene() {
     distanceOffset: { value: -8.1, min: -15, max: 4, step: 0.1, label: 'Mesafe' },
   });
 
+  const routeControls = useControls('Route', {
+    longitudeOffset: { value: 180, min: -180, max: 360, step: 15, label: 'Lng Offset' },
+  });
+
   const lightingControls = useControls('Lighting', {
     ambientIntensity: { value: 0.3, min: 0, max: 2, step: 0.05, label: 'Ambient' },
     directionalIntensity: { value: 1.0, min: 0, max: 3, step: 0.1, label: 'Directional' },
@@ -44,8 +81,8 @@ function EarthScene() {
       camera={{ position: [0, 5, 20], fov: cameraControls.fov }}
       gl={{
         antialias: false,
-        powerPreference: "high-performance",
-        precision: "mediump",
+        powerPreference: 'high-performance',
+        precision: 'mediump',
       }}
       dpr={[1, 1.5]}
       style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 10 }}
@@ -57,9 +94,29 @@ function EarthScene() {
         <directionalLight position={[10, 10, 5]} intensity={lightingControls.directionalIntensity} />
         <pointLight position={[-10, -10, -5]} intensity={0.5} />
 
-        <CameraController fov={cameraControls.fov} distanceOffset={cameraControls.distanceOffset} />
+        <CameraController
+          fov={cameraControls.fov}
+          distanceOffset={cameraControls.distanceOffset}
+          isTrackingMode={isTrackingMode}
+        />
 
-        <Globe {...globeControls} />
+        {isTrackingMode && (
+          <OrbitControls
+            enableZoom={true}
+            minDistance={12}
+            maxDistance={35}
+            enablePan={false}
+            rotateSpeed={0.8}
+            target={[0, 0, 0]}
+          />
+        )}
+
+        <Globe
+          {...globeControls}
+          isTrackingMode={isTrackingMode}
+          activeRoute={activeRoute}
+          longitudeOffset={routeControls.longitudeOffset}
+        />
 
         <Environment preset="night" />
       </Suspense>

@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Leva } from 'leva';
 import EarthScene from './components/EarthScene';
 import { useLang } from './context/LangContext';
+import { useTracking } from './context/TrackingContext';
 import { type Lang, translations } from './i18n/translations';
 
 const LANGUAGES: Lang[] = ['TR', 'EN', 'DE'];
@@ -37,6 +38,15 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+const trackingCardStyle = {
+  background: 'rgba(0, 0, 0, 0.6)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255, 255, 255, 0.18)',
+  borderRadius: '0.75rem',
+  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.3)',
+};
+
 function App() {
   const [inputValue, setInputValue] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,6 +56,14 @@ function App() {
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
   const { lang, setLang, t } = useLang();
+  const {
+    isTrackingMode,
+    trackingItems,
+    activeTrackingId,
+    exitTrackingMode,
+    selectTracking,
+    addTrackingFromSearch,
+  } = useTracking();
   const menuItems = [t.menuContent1, t.menuContent2, t.menuContent3, t.menuContent4];
 
   useEffect(() => {
@@ -65,9 +83,9 @@ function App() {
   }, []);
 
   const progress = clamp(scrollY / SCROLL_TRIGGER, 0, 1);
-  const headerOpacity = progress;
-  const glassTranslateY = (1 - progress) * 100;
-  const scrollIndicatorOpacity = 1 - progress;
+  const headerOpacity = isTrackingMode ? 1 : progress;
+  const glassTranslateY = isTrackingMode ? 100 : (1 - progress) * 100;
+  const scrollIndicatorOpacity = isTrackingMode ? 0 : 1 - progress;
   const headerHeight = 56;
   const logeTopPercent = 22 - progress * 16;
   const logeScale = 0.42 + (1 - progress) * 0.58;
@@ -240,12 +258,13 @@ function App() {
         />
       )}
 
-      {/* LOG-E + motto: merkezden header ortasına birlikte kayar ve küçülür */}
+      {/* LOG-E + motto: merkezden header ortasına birlikte kayar ve küçülür, takip modunda gizle */}
       <div
-        className="fixed left-1/2 flex flex-col justify-center items-center pointer-events-none z-[10]"
+        className="fixed left-1/2 flex flex-col justify-center items-center pointer-events-none z-[10] transition-opacity duration-500"
         style={{
           top: `${logeTopPercent}%`,
           transform: `translate(-50%, -50%) scale(${logeScale})`,
+          opacity: isTrackingMode ? 0 : 1,
         }}
       >
         <h1
@@ -287,6 +306,80 @@ function App() {
           </svg>
         </motion.div>
       </div>
+
+      {/* Takip modu: Kapat butonu + sağda takip kartları */}
+      <AnimatePresence>
+        {isTrackingMode && (
+          <>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={exitTrackingMode}
+              className="fixed top-6 right-4 sm:top-8 sm:right-6 z-[40] flex items-center gap-2 px-4 py-2.5 rounded-full font-exo font-semibold text-sm text-white/95 hover:text-white hover:bg-white/15 transition-all duration-200"
+              style={{
+                background: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+              }}
+              aria-label={t.closeTracking}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+              <span className="hidden sm:inline">{t.closeTracking}</span>
+            </motion.button>
+
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 24 }}
+              transition={{ delay: 0.1 }}
+              className="fixed top-20 right-4 bottom-4 sm:top-24 sm:right-6 sm:bottom-auto z-[38] flex flex-col gap-3 w-[calc(100vw-2rem)] max-w-[320px] sm:max-w-[280px] max-h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden py-1"
+            >
+              <h3 className="text-white/90 font-exo font-bold text-sm uppercase tracking-wider px-1">
+                {t.trackingTitle}
+              </h3>
+              {trackingItems.map((item) => (
+                <motion.button
+                  key={item.id}
+                  onClick={() => selectTracking(item.id)}
+                  className="text-left p-4 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.99]"
+                  style={{
+                    ...trackingCardStyle,
+                    borderColor: activeTrackingId === item.id ? 'rgba(0, 242, 255, 0.5)' : 'rgba(255, 255, 255, 0.18)',
+                    boxShadow: activeTrackingId === item.id ? '0 0 20px rgba(0, 242, 255, 0.2)' : undefined,
+                  }}
+                  whileHover={{ y: -2 }}
+                >
+                  <div className="font-exo font-mono text-xs text-cyan-300/90 truncate mb-2">
+                    {item.code}
+                  </div>
+                  <div className="flex items-center gap-2 text-white/70 text-xs font-exo mb-1">
+                    <span className="text-white/50">{t.from}:</span>
+                    <span>{item.origin.city}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/70 text-xs font-exo mb-2">
+                    <span className="text-white/50">{t.to}:</span>
+                    <span>{item.destination.city}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/60 text-xs font-exo">{item.status}</span>
+                    <div className="h-1.5 flex-1 max-w-[80px] ml-2 rounded-full bg-white/10 overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.progress}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Aero glass panel: alttan yukarı açılır, üst kenarı aşağıda (responsive) */}
       <div
@@ -346,8 +439,8 @@ function App() {
       <div
         className="fixed bottom-0 left-1/2 -translate-x-1/2 mb-12 z-[20] transition-opacity duration-300"
         style={{
-          opacity: 1 - progress,
-          pointerEvents: progress > 0.5 ? 'none' : 'auto',
+          opacity: isTrackingMode ? 0 : 1 - progress,
+          pointerEvents: isTrackingMode || progress > 0.5 ? 'none' : 'auto',
         }}
       >
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1 }} className="relative">
@@ -355,16 +448,30 @@ function App() {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                addTrackingFromSearch(inputValue.trim() || 'LOG');
+                setInputValue('');
+              }
+            }}
             placeholder={t.searchPlaceholder}
             className="px-6 pr-12 py-2.5 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-300 w-[90vw] max-w-[500px] text-base font-medium"
             style={{ ...glassyStyle, paddingLeft: '1.5rem', paddingRight: '3rem' }}
           />
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/60">
+          <button
+            type="button"
+            onClick={() => {
+              addTrackingFromSearch(inputValue.trim() || 'LOG');
+              setInputValue('');
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors p-1"
+            aria-label="Ara"
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.35-4.35" />
             </svg>
-          </div>
+          </button>
           <div
             className="absolute inset-0 pointer-events-none rounded-[2rem]"
             style={{
